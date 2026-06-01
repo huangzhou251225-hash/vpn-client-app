@@ -1,5 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const { setupIPC } = require('./clash');
+const { setupUserIPC } = require('./user');
 
 // 主窗口
 let mainWindow;
@@ -34,6 +36,10 @@ function createWindow() {
 // 应用启动
 app.whenReady().then(() => {
   createWindow();
+  
+  // 设置IPC
+  setupIPC();
+  setupUserIPC();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
