@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VPN Client</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #fff;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+    
+    /* 侧边栏 */
+    .sidebar {
+      width: 280px;
+      background: #16213e;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 30px;
+      color: #e94560;
+    }
+    
+    .status {
+      background: #0f3460;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .status-text {
+      font-size: 14px;
+      color: #a0a0a0;
+    }
+    
+    .status-value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #e94560;
+    }
+    
+    /* 节点列表 */
+    .node-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+    
+    .node-item {
+      background: #0f3460;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+    }
+    
+    .node-item:hover {
+      background: #1a4a7a;
+      transform: translateX(5px);
+    }
+    
+    .node-item.active {
+      border: 2px solid #e94560;
+    }
+    
+    .node-name {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .node-info {
+      font-size: 12px;
+      color: #a0a0a0;
+    }
+    
+    .node-delay {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      color: #e94560;
+    }
+    
+    /* 主内容区 */
+    .main {
+      flex: 1;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    
+    .title {
+      font-size: 28px;
+      font-weight: bold;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+    
+    .btn-primary {
+      background: #e94560;
+      color: #fff;
+    }
+    
+    .btn-primary:hover {
+      background: #c73e54;
+    }
+    
+    .btn-secondary {
+      background: #0f3460;
+      color: #fff;
+    }
+    
+    .btn-secondary:hover {
+      background: #1a4a7a;
+    }
+    
+    /* 统计信息 */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      background: #16213e;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: #a0a0a0;
+      margin-bottom: 10px;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    /* 日志 */
+    .logs {
+      flex: 1;
+      background: #16213e;
+      padding: 20px;
+      border-radius: 10px;
+      overflow-y: auto;
+    }
+    
+    .log-item {
+      font-size: 12px;
+      color: #a0a0a0;
+      margin-bottom: 5px;
+      font-family: monospace;
+    }
+    
+    .log-time {
+      color: #e94560;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+      <div class="logo">VPN Client</div>
+      
+      <div class="status">
+        <div class="status-text">当前状态</div>
+        <div class="status-value" id="status">已断开</div>
+      </div>
+      
+      <div class="node-list" id="nodeList">
+        <!-- 节点列表由JS动态生成 -->
+      </div>
+    </div>
+    
+    <!-- 主内容区 -->
+    <div class="main">
+      <div class="header">
+        <div class="title">控制面板</div>
+        <div class="actions">
+          <button class="btn btn-secondary" onclick="testAllNodes()">测试延迟</button>
+          <button class="btn btn-primary" onclick="autoSelect()">自动选择</button>
+        </div>
+      </div>
+      
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-label">当前节点</div>
+          <div class="stat-value" id="currentNode">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">延迟</div>
+          <div class="stat-value" id="currentDelay">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">连接时间</div>
+          <div class="stat-value" id="connectTime">-</div>
+        </div>
+      </div>
+      
+      <div class="logs" id="logs">
+        <div class="log-item">
+          <span class="log-time">[00:00:00]</span> 系统初始化完成
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 节点数据
+    let nodes = [];
+    let currentNode = null;
+    let connectStartTime = null;
+
+    // 初始化
+    async function init() {
+      await loadNodes();
+      renderNodeList();
+      addLog('系统初始化完成');
+    }
+
+    // 加载节点
+    async function loadNodes() {
+      try {
+        nodes = await window.electronAPI.getNodes();
+      } catch (error) {
+        addLog('加载节点失败: ' + error.message);
+        // 使用默认节点
+        nodes = [
+          { name: '新加坡-1', ip: '43.156.20.12', port: 443, delay: 50 },
+          { name: '新加坡-2', ip: '118.26.111.241', port: 443, delay: 60 },
+          { name: '美国', ip: '103.234.62.100', port: 443, delay: 150 }
+        ];
+      }
+    }
+
+    // 渲染节点列表
+    function renderNodeList() {
+      const list = document.getElementById('nodeList');
+      list.innerHTML = nodes.map(node => `
+        <div class="node-item ${node.name === currentNode ? 'active' : ''}" 
+             onclick="showNodeDetail('${node.name}')"
+             ondblclick="switchNode('${node.name}')">
+          <div class="node-name">${node.name}</div>
+          <div class="node-info">${node.ip}:${node.port}</div>
+          <div class="node-delay">${node.delay}ms</div>
+        </div>
+      `).join('');
+    }
+
+    // 显示节点详情（单击）
+    function showNodeDetail(nodeName) {
+      const node = nodes.find(n => n.name === nodeName);
+      if (node) {
+        addLog(`节点详情: ${node.name} - ${node.ip}:${node.port} - 延迟: ${node.delay}ms`);
+      }
+    }
+
+    // 切换节点（双击）
+    async function switchNode(nodeName) {
+      try {
+        await window.electronAPI.switchNode(nodeName);
+        currentNode = nodeName;
+        connectStartTime = Date.now();
+        
+        document.getElementById('status').textContent = '已连接';
+        document.getElementById('currentNode').textContent = nodeName;
+        
+        addLog(`已切换到节点: ${nodeName}`);
+        renderNodeList();
+      } catch (error) {
+        addLog('切换节点失败: ' + error.message);
+      }
+    }
+
+    // 测试所有节点延迟
+    async function testAllNodes() {
+      addLog('开始测试所有节点延迟...');
+      
+      for (const node of nodes) {
+        try {
+          const delay = await window.electronAPI.testDelay(node.ip);
+          node.delay = delay;
+          addLog(`${node.name}: ${delay}ms`);
+        } catch (error) {
+          addLog(`${node.name}: 测试失败`);
+        }
+      }
+      
+      renderNodeList();
+      addLog('延迟测试完成');
+    }
+
+    // 自动选择最快节点
+    async function autoSelect() {
+      addLog('自动选择最快节点...');
+      
+      await testAllNodes();
+      
+      const fastest = nodes.reduce((prev, current) => 
+        prev.delay < current.delay ? prev : current
+      );
+      
+      addLog(`最快节点: ${fastest.name} (${fastest.delay}ms)`);
+      await switchNode(fastest.name);
+    }
+
+    // 添加日志
+    function addLog(message) {
+      const logs = document.getElementById('logs');
+      const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+      const logItem = document.createElement('div');
+      logItem.className = 'log-item';
+      logItem.innerHTML = `<span class="log-time">[${time}]</span> ${message}`;
+      logs.appendChild(logItem);
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    // 更新连接时间
+    setInterval(() => {
+      if (connectStartTime) {
+        const elapsed = Math.floor((Date.now() - connectStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        document.getElementById('connectTime').textContent = 
+          `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      }
+    }, 1000);
+
+    // 启动
+    init();
+  </script>
+</body>
+</html>
