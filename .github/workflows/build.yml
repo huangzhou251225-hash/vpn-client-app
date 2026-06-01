@@ -1,34 +1,25 @@
-name: Build and Release
+name: Build
 
 on:
   push:
     branches: [ master, main ]
-    tags: [ 'v*' ]
-  pull_request:
-    branches: [ master, main ]
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [18.x]
+    runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v3
     
-    - name: Setup Node.js ${{ matrix.node-version }}
+    - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        node-version: '18'
     
     - name: Install dependencies
-      run: npm ci
+      run: npm install
     
-    - name: Build application
+    - name: Build
       run: npm run build
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -36,28 +27,5 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: build-${{ matrix.os }}
+        name: build-files
         path: dist/
-    
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Download all artifacts
-      uses: actions/download-artifact@v3
-    
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          build-ubuntu-latest/**
-          build-windows-latest/**
-          build-macos-latest/**
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
