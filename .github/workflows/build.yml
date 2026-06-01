@@ -28,9 +28,6 @@ jobs:
     - name: Install dependencies
       run: npm ci
     
-    - name: Download Clash core
-      run: npm run download-clash
-    
     - name: Build application
       run: npm run build
       env:
@@ -40,13 +37,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: build-${{ matrix.os }}
-        path: |
-          dist/
-          *.exe
-          *.dmg
-          *.AppImage
-          *.deb
-          *.rpm
+        path: dist/
     
   release:
     needs: build
