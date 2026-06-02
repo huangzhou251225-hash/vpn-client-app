@@ -30,6 +30,7 @@
     "name": "VPN Client Team",
     "email": "team@vpnclient.com"
   },
+  "build": {
     "appId": "com.vpn.client",
     "productName": "VPN Client",
     "directories": {
